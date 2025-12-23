@@ -1,0 +1,106 @@
+:root {
+  --bgColor: #202329;
+  --fontColor: #fff;
+  --ex-primary-color: #17ac74;
+}
+
+body,
+html {
+  background-color: var(--bgColor) !important;
+}
+body > * {
+  background-color: var(--bgColor) !important;
+}
+body > * > * {
+  background-color: var(--bgColor) !important;
+}
+body > * > * > * {
+  background-color: var(--bgColor) !important;
+}
+.chart-container {
+  top: 0 !important;
+  height: 100% !important;
+}
+.chart-widget {
+  height: 100% !important;
+}
+td.chart-markup-table {
+  background-color: var(--bgColor) !important;
+}
+
+.tv-exit-fullscreen-button {
+  display: none;
+}
+
+.pane-legend-item-value-container {
+  font-size: 14px !important;
+}
+.pane-legend-item-value-title {
+  margin-right: 3px !important;
+}
+
+div[class^='toolbar-'] {
+  padding: 0 !important;
+}
+.group-wWM3zP_M- {
+  background-color: var(--bgColor) !important;
+}
+/* .icon-beK_KS0k-, */
+.button-2ioYhFEY-,
+.menu-16FRUKka-,
+.button-2ioYhFEY-:hover,
+.menu-16FRUKka-:hover {
+  color: var(--fontColor);
+  background-color: var(--bgColor) !important;
+}
+#tooltip-root-element,
+#header-toolbar-indicators::before {
+  display: none;
+}
+.tv-spinner__spinner-layer {
+  color: var(--ex-primary-color) !important;
+}
+
+/* 隐藏头部 OHLC 信息 - 使用通用选择器匹配 TradingView 动态生成的类名 */
+[id*="tradingview"] > div:first-child,
+[id*="tradingview"] > div:first-child > div,
+[id*="tradingview"] > div:first-child > table,
+[id*="tradingview"] table,
+[id*="tradingview"] div[class*="header"],
+[id*="tradingview"] div[class*="symbol"],
+[id*="tradingview"] div[class*="ohlc"],
+[id*="tradingview"] table[class*="header"],
+[id*="tradingview"] table[class*="symbol"],
+[id*="tradingview"] table[class*="ohlc"],
+[id*="tradingview"] td[class*="header"],
+[id*="tradingview"] td[class*="symbol"],
+[id*="tradingview"] td[class*="ohlc"],
+[id*="tradingview"] span[class*="header"],
+[id*="tradingview"] span[class*="symbol"],
+[id*="tradingview"] span[class*="ohlc"],
+[id*="tradingview"] *[class*="status-line"],
+[id*="tradingview"] *[class*="symbol-info"] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  height: 0 !important;
+  max-height: 0 !important;
+  overflow: hidden !important;
+  font-size: 0 !important;
+  line-height: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none !important;
+}
+
+/* 不隐藏图例相关元素，只通过 JavaScript 隐藏包含 OHLC 的图例 */
+/* 技术指标的图例需要正常显示 */
+
+/* 隐藏 main 类元素（包含 OHLC 信息时） */
+[id*="tradingview"] .main,
+[id*="tradingview"] [class*="main"],
+[id*="tradingview"] [class*="main"] *,
+div[class*="main"],
+span[class*="main"] {
+  /* 通过 JavaScript 检查内容后隐藏 */
+}
