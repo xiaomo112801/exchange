@@ -149,6 +149,10 @@
         },
         // #endif
         {
+          "path": "HotContractsList",
+          "type": "page"
+        },
+        {
           "path": "notice/index",
           "type": "page",
           "name": "notice",

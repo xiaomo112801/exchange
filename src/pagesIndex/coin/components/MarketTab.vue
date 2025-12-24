@@ -227,51 +227,71 @@ function formatDepthAmount(amount?: number) {
     </view>
 
     <!-- 订单簿 -->
-    <view class="min-h-[300px] border-t border-gray-200 bg-white">
+    <view class="min-h-[300px] border-t border-gray-200 bg-white pb-2">
       <view class="pt-2">
         <BaseTabs v-model="orderBookTab" :bordered="false" custom-class="login-tabs">
           <wd-tab title="当前盘口" :name="0">
             <view class="py-3">
-              <view class="mb-2 flex items-center justify-between px-2 text-[12px] text-gray-500">
-                <span>买  数量</span>
-                <span>价格 USDT</span>
-                <span>数量  卖</span>
+              <!-- 表头：6 列 = 买 | 数量(BTC) | 价格 | USDT | 数量(BTC) | 卖 -->
+              <view class="mb-2 flex items-center px-2 text-[12px] text-gray-500">
+                <span class="w-4">买</span>
+                <span class="flex-1 pl-2 text-left">数量(BTC)</span>
+                <span class="w-[72px] text-right">价格</span>
+                <span class="w-[72px] text-left">USDT</span>
+                <span class="flex-1 pr-2 text-right">数量(BTC)</span>
+                <span class="w-4 text-right">卖</span>
               </view>
+
+              <!-- 行：6 列，与表头一一对应，深度条在价格两列下方且高度随行高 -->
               <view class="divide-y divide-gray-100">
                 <view
                   v-for="i in Math.max(buyOrders.length, sellOrders.length)"
                   :key="i"
-                  class="flex items-center justify-between px-2 py-1"
+                  class="flex items-center px-2 h-5"
                 >
-                  <!-- 买盘 -->
-                  <view class="relative flex-1 pr-2">
+                  <!-- 列 1：买序号 -->
+                  <span class="w-4 text-[12px] text-gray-400">
+                    {{ i }}
+                  </span>
+
+                  <!-- 列 2：买数量 -->
+                  <span class="flex-1 pl-2 text-[12px] text-gray-600">
+                    {{ buyOrders[i - 1]?.amount ? formatDepthAmount(buyOrders[i - 1].amount) : '' }}
+                  </span>
+
+                  <!-- 列 3：买价 + 绿色深度条（价格列，内容右对齐） -->
+                  <view class="relative flex h-full w-[72px] items-center justify-end">
                     <view
                       v-if="buyOrders[i - 1]"
-                      class="absolute inset-y-1 right-0 rounded-l bg-green-50"
+                      class="absolute inset-y-0 right-0 bg-green-50"
                       :style="{ width: `${Math.min(100, (buyOrders[i - 1].amount / maxDepth) * 100)}%` }"
                     />
-                    <view class="relative flex items-center gap-2 text-[12px]">
-                      <span class="text-gray-600">{{ buyOrders[i - 1]?.amount ? formatDepthAmount(buyOrders[i - 1].amount) : '' }}</span>
-                      <span :style="{ color: '#00c853' }">
-                        {{ buyOrders[i - 1]?.price ? buyOrders[i - 1].price.toFixed(5) : '' }}
-                      </span>
-                    </view>
+                    <span class="relative z-[1] text-[12px]" :style="{ color: '#00c853' }">
+                      {{ buyOrders[i - 1]?.price ? buyOrders[i - 1].price.toFixed(5) : '' }}
+                    </span>
                   </view>
 
-                  <!-- 卖盘 -->
-                  <view class="relative flex-1 pl-2 text-right">
+                  <!-- 列 4：卖价 + 红色深度条（USDT 列，内容左对齐） -->
+                  <view class="relative flex h-full w-[72px] items-center">
                     <view
                       v-if="sellOrders[i - 1]"
-                      class="absolute inset-y-1 left-0 rounded-r bg-red-50"
+                      class="absolute inset-y-0 left-0 bg-red-50"
                       :style="{ width: `${Math.min(100, (sellOrders[i - 1].amount / maxDepth) * 100)}%` }"
                     />
-                    <view class="relative flex items-center justify-end gap-2 text-[12px]">
-                      <span :style="{ color: '#f44336' }">
-                        {{ sellOrders[i - 1]?.price ? sellOrders[i - 1].price.toFixed(5) : '' }}
-                      </span>
-                      <span class="text-gray-600">{{ sellOrders[i - 1]?.amount ? formatDepthAmount(sellOrders[i - 1].amount) : '' }}</span>
-                    </view>
+                    <span class="relative z-[1] text-[12px]" :style="{ color: '#f44336' }">
+                      {{ sellOrders[i - 1]?.price ? sellOrders[i - 1].price.toFixed(5) : '' }}
+                    </span>
                   </view>
+
+                  <!-- 列 5：卖数量 -->
+                  <span class="flex-1 pr-2 text-right text-[12px] text-gray-600">
+                    {{ sellOrders[i - 1]?.amount ? formatDepthAmount(sellOrders[i - 1].amount) : '' }}
+                  </span>
+
+                  <!-- 列 6：卖序号 -->
+                  <span class="w-4 text-right text-[12px] text-gray-400">
+                    {{ i }}
+                  </span>
                 </view>
               </view>
             </view>
@@ -283,27 +303,27 @@ function formatDepthAmount(amount?: number) {
                 size="small"
                 :border="false"
                 :stripe="false"
-                row-height="5rem"
+                row-height="2rem"
                 class="trades-table"
               >
-                <wd-table-col prop="time" label="时间" width="70" />
-                <wd-table-col prop="side" label="方向" width="50">
+                <wd-table-col prop="time" label="时间" width="22%" />
+                <wd-table-col prop="side" label="方向" width="18%">
                   <template #value="{ row }">
                     <span :style="{ color: row.side === 'buy' ? '#00c853' : '#f44336' }">
                       {{ row.side === 'buy' ? '买入' : '卖出' }}
                     </span>
                   </template>
                 </wd-table-col>
-                <wd-table-col prop="price" label="价格 USDT" min-width="70">
+                <wd-table-col prop="price" label="价格 USDT" width="27%">
                   <template #value="{ row }">
                     <span :style="{ color: row.side === 'buy' ? '#00c853' : '#f44336' }">
                       {{ row.price.toFixed(5) }}
                     </span>
                   </template>
                 </wd-table-col>
-                <wd-table-col prop="amount" label="数量 STABLE" min-width="90" align="right">
+                <wd-table-col prop="amount" label="数量 STABLE" width="33%" align="right">
                   <template #value="{ row }">
-                    {{ row.amount.toFixed(1) }}K
+                    {{ row.amount.toFixed(1) }}
                   </template>
                 </wd-table-col>
               </wd-table>
@@ -405,6 +425,16 @@ function formatDepthAmount(amount?: number) {
 
 :deep(.trades-table .wd-table__row) {
   height: 22px;
+}
+
+:deep(.wd-table__cell) {
+  padding: 0 10px !important;
+  min-height: 2rem !important;
+}
+
+:deep(.wd-table__header){
+  min-height: 2rem !important;
+  height: 2rem !important;
 }
 
 .trades-table-wrap {

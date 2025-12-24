@@ -1,7 +1,14 @@
 <script setup lang="ts">
 import BaseTabs from '@/components/BaseTabs.vue'
 
-// 概况页子标签
+// 从父级接收币种基础信息（图标等），用于标题区展示
+const { coinData } = defineProps<{
+  coinData: {
+    icon: string
+  }
+}>()
+
+// 概况页子标签（目前只保留“币种信息”）
 const overviewTabIndex = ref(0)
 const overviewTabList = ref([
   { title: '币种信息' },
@@ -44,14 +51,14 @@ const coinDetailInfo = computed(() => ({
 
     <!-- 币种信息子标签内容 -->
     <view class="pb-8">
-      <!-- 币种标题 -->
-      <view class="flex items-center gap-2 border-b border-gray-200 pb-4">
-        <image :src="coinData.icon" class="h-8 w-8" mode="aspectFit" />
-        <wd-text :text="`${coinDetailInfo.name} ${coinDetailInfo.code}`" size="18px" color="#000" :bold="true" />
+      <!-- 币种标题（缩小尺寸，减小与下方间距） -->
+      <view class="flex items-center gap-1 border-b border-gray-200 py-2">
+        <image :src="coinData.icon" class="h-6 w-6" mode="aspectFit" />
+        <wd-text :text="`${coinDetailInfo.name} ${coinDetailInfo.code}`" size="16px" color="#000" :bold="true" />
       </view>
 
       <!-- 币种详细信息 -->
-      <view class="mt-4">
+      <view>
         <view class="min-h-[24px] flex items-center justify-between border-b border-gray-100 py-3">
           <wd-text text="排名" size="14px" color="#666" />
           <wd-text :text="`No.${coinDetailInfo.rank}`" size="14px" color="#000" />
@@ -104,19 +111,20 @@ const coinDetailInfo = computed(() => ({
         </view>
       </view>
 
-      <!-- 官方链接 -->
-      <!-- <view class="mt-6">
+      <!-- 官方链接（保留，样式贴近行情规范） -->
+      <view class="mt-6">
         <wd-text text="官方链接" size="16px" color="#000" :bold="true" class="mb-3 block" />
-        <view class="grid grid-cols-4 gap-3">
+        <view class="grid grid-cols-3 gap-3">
           <view
-            v-for="link in coinDetailInfo.officialLinks" :key="link.name"
-            class="min-h-[80px] flex flex-col items-center justify-center rounded-lg bg-gray-50 p-3 transition-colors active:bg-gray-200"
+            v-for="link in coinDetailInfo.officialLinks"
+            :key="link.name"
+            class="flex items-center justify-center rounded-full border border-gray-200 bg-white px-3 py-2 active:bg-gray-100"
           >
-            <wd-text :text="link.icon" size="24px" />
-            <wd-text :text="link.name" size="12px" color="#666" class="mt-1" />
+            <wd-text :text="link.icon" size="14px" class="mr-1" />
+            <wd-text :text="link.name" size="14px" color="#333" />
           </view>
         </view>
-      </view> -->
+      </view>
 
       <!-- 社交媒体 -->
       <!-- <view class="mt-6">

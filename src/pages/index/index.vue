@@ -7,6 +7,7 @@ definePage({
 })
 
 const router = useRouter()
+import CoinList from '@/components/CoinList.vue'
 // const search = ref<string>('')
 const notificationCount = ref<number>(12)
 
@@ -104,7 +105,7 @@ const mainCoinList = ref<any[]>([
 ])
 const mainCoinListForSwiper = computed(() => mainCoinList.value as unknown as any[])
 
-const tabIndex = ref<number>(0)
+const tabIndex = ref<number>(1)
 
 const tabList = ref<any[]>([
   {
@@ -271,56 +272,160 @@ const selectIconItem = ref<number[]>([
       </view>
       <view class="w-full">
         <wd-tabs v-model="tabIndex" :bordered="false" custom-class="login-tabs" class="w-full">
-          <block v-for="item in tabList" :key="item.title">
-            <wd-tab :title="item.title">
-              <view class="tab-content mt-2">
-                <wd-checkbox-group v-model="selectIconItem" class="w-full">
-                  <view class="tab-grid grid grid-cols-2 gap-2">
-                    <template v-for="item in mainCoinListForSwiper" :key="item">
-                      <view class="relative">
-                        <view
-                          class="ml-0 flex flex-1 flex-col items-start justify-center gap-1 rounded-lg bg-gray-100 p-3"
-                        >
-                          <view class="mr-1 flex items-center justify-start">
-                            <wd-text
-                              :text="coinItem(item).coinCode" size="0.8rem" :bold="true" color="#000"
-                              line-height="1rem"
-                            />
-                            <wd-text
-                              :text="coinItem(item).tag2" size="0.5rem" color="#000"
-                              class="ml-1 rounded-0.5 bg-gray-200 px-1"
-                            />
-                          </view>
-                          <view class="flex items-center justify-start">
-                            <view>
-                              <wd-text
-                                :text="String(coinItem(item).total)" size="0.7rem" mode="price" color="#000"
-                                line-height="1rem"
-                              />
-                            </view>
-
-                            <view>
-                              <wd-text text="-" size="0.7rem" color="#000" line-height="1rem" />
-                              <wd-text
-                                :text="`${coinItem(item).increase}%`" size="0.7rem" color="#000"
-                                line-height="1rem"
-                              />
-                            </view>
-                          </view>
-                        </view>
-                        <view class="absolute right-0 top-1/2 -translate-y-1/2">
-                          <wd-checkbox
-                            :model-value="coinItem(item).id" checked-color="#000"
-                            @change="handleChange(coinItem(item))"
+          <wd-tab title="我的">
+            <view class="tab-content mt-2">
+              <wd-checkbox-group v-model="selectIconItem" class="w-full">
+                <view class="tab-grid grid grid-cols-2 gap-2">
+                  <template v-for="item in mainCoinListForSwiper" :key="item">
+                    <view class="relative">
+                      <view
+                        class="ml-0 flex flex-1 flex-col items-start justify-center gap-1 rounded-lg bg-gray-100 p-3"
+                      >
+                        <view class="mr-1 flex items-center justify-start">
+                          <wd-text
+                            :text="coinItem(item).coinCode" size="0.8rem" :bold="true" color="#000"
+                            line-height="1rem"
+                          />
+                          <wd-text
+                            :text="coinItem(item).tag2" size="0.5rem" color="#000"
+                            class="ml-1 rounded-0.5 bg-gray-200 px-1"
                           />
                         </view>
+                        <view class="flex items-center justify-start">
+                          <view>
+                            <wd-text
+                              :text="String(coinItem(item).total)" size="0.7rem" mode="price" color="#000"
+                              line-height="1rem"
+                            />
+                          </view>
+
+                          <view>
+                            <wd-text text="-" size="0.7rem" color="#000" line-height="1rem" />
+                            <wd-text
+                              :text="`${coinItem(item).increase}%`" size="0.7rem" color="#000"
+                              line-height="1rem"
+                            />
+                          </view>
+                        </view>
                       </view>
-                    </template>
-                  </view>
-                </wd-checkbox-group>
-              </view>
-            </wd-tab>
-          </block>
+                      <view class="absolute right-0 top-1/2 -translate-y-1/2">
+                        <wd-checkbox
+                          :model-value="coinItem(item).id" checked-color="#000"
+                          @change="handleChange(coinItem(item))"
+                        />
+                      </view>
+                    </view>
+                  </template>
+                </view>
+              </wd-checkbox-group>
+            </view>
+          </wd-tab>
+
+          <!-- 热门合约：改用通用 CoinList 组件，后续“我的”也可复用 -->
+          <wd-tab title="热门合约">
+            <view class="mt-2">
+              <CoinList />
+            </view>
+          </wd-tab>
+
+          <!-- 其余标签暂时复用旧内容 -->
+          <wd-tab title="榜单">
+            <view class="tab-content mt-2">
+              <wd-checkbox-group v-model="selectIconItem" class="w-full">
+                <view class="tab-grid grid grid-cols-2 gap-2">
+                  <template v-for="item in mainCoinListForSwiper" :key="item">
+                    <view class="relative">
+                      <view
+                        class="ml-0 flex flex-1 flex-col items-start justify-center gap-1 rounded-lg bg-gray-100 p-3"
+                      >
+                        <view class="mr-1 flex items-center justify-start">
+                          <wd-text
+                            :text="coinItem(item).coinCode" size="0.8rem" :bold="true" color="#000"
+                            line-height="1rem"
+                          />
+                          <wd-text
+                            :text="coinItem(item).tag2" size="0.5rem" color="#000"
+                            class="ml-1 rounded-0.5 bg-gray-200 px-1"
+                          />
+                        </view>
+                        <view class="flex items-center justify-start">
+                          <view>
+                            <wd-text
+                              :text="String(coinItem(item).total)" size="0.7rem" mode="price" color="#000"
+                              line-height="1rem"
+                            />
+                          </view>
+
+                          <view>
+                            <wd-text text="-" size="0.7rem" color="#000" line-height="1rem" />
+                            <wd-text
+                              :text="`${coinItem(item).increase}%`" size="0.7rem" color="#000"
+                              line-height="1rem"
+                            />
+                          </view>
+                        </view>
+                      </view>
+                      <view class="absolute right-0 top-1/2 -translate-y-1/2">
+                        <wd-checkbox
+                          :model-value="coinItem(item).id" checked-color="#000"
+                          @change="handleChange(coinItem(item))"
+                        />
+                      </view>
+                    </view>
+                  </template>
+                </view>
+              </wd-checkbox-group>
+            </view>
+          </wd-tab>
+
+          <wd-tab title="新币">
+            <view class="tab-content mt-2">
+              <wd-checkbox-group v-model="selectIconItem" class="w-full">
+                <view class="tab-grid grid grid-cols-2 gap-2">
+                  <template v-for="item in mainCoinListForSwiper" :key="item">
+                    <view class="relative">
+                      <view
+                        class="ml-0 flex flex-1 flex-col items-start justify-center gap-1 rounded-lg bg-gray-100 p-3"
+                      >
+                        <view class="mr-1 flex items-center justify-start">
+                          <wd-text
+                            :text="coinItem(item).coinCode" size="0.8rem" :bold="true" color="#000"
+                            line-height="1rem"
+                          />
+                          <wd-text
+                            :text="coinItem(item).tag2" size="0.5rem" color="#000"
+                            class="ml-1 rounded-0.5 bg-gray-200 px-1"
+                          />
+                        </view>
+                        <view class="flex items-center justify-start">
+                          <view>
+                            <wd-text
+                              :text="String(coinItem(item).total)" size="0.7rem" mode="price" color="#000"
+                              line-height="1rem"
+                            />
+                          </view>
+
+                          <view>
+                            <wd-text text="-" size="0.7rem" color="#000" line-height="1rem" />
+                            <wd-text
+                              :text="`${coinItem(item).increase}%`" size="0.7rem" color="#000"
+                              line-height="1rem"
+                            />
+                          </view>
+                        </view>
+                      </view>
+                      <view class="absolute right-0 top-1/2 -translate-y-1/2">
+                        <wd-checkbox
+                          :model-value="coinItem(item).id" checked-color="#000"
+                          @change="handleChange(coinItem(item))"
+                        />
+                      </view>
+                    </view>
+                  </template>
+                </view>
+              </wd-checkbox-group>
+            </view>
+          </wd-tab>
         </wd-tabs>
       </view>
     </view>

@@ -15,6 +15,7 @@ type _LocationUrl =
   "/subPages/styles/index" |
   "/subEcharts/echarts/index" |
   "/subAsyncEcharts/asyncEcharts/index" |
+  "/pagesIndex/HotContractsList" |
   "/pagesIndex/coin/detail" |
   "/pagesIndex/notice/index" |
   "/pagesIndex/recharge/index" |

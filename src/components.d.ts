@@ -9,6 +9,7 @@ declare module 'vue' {
   export interface GlobalComponents {
     AppKlineChart: typeof import('./components/AppKlineChart.vue')['default']
     BaseTabs: typeof import('./components/BaseTabs.vue')['default']
+    CoinList: typeof import('./components/CoinList.vue')['default']
     DemoBlock: typeof import('./components/DemoBlock.vue')['default']
     GlobalLoading: typeof import('./components/GlobalLoading.vue')['default']
     GlobalMessage: typeof import('./components/GlobalMessage.vue')['default']
@@ -41,7 +42,6 @@ declare module 'vue' {
     WdTabbarItem: typeof import('wot-design-uni/components/wd-tabbar-item/wd-tabbar-item.vue')['default']
     WdTable: typeof import('wot-design-uni/components/wd-table/wd-table.vue')['default']
     WdTableCol: typeof import('wot-design-uni/components/wd-table-col/wd-table-col.vue')['default']
-    WdTableColumn: typeof import('wot-design-uni/components/wd-table-column/wd-table-column.vue')['default']
     WdTabs: typeof import('wot-design-uni/components/wd-tabs/wd-tabs.vue')['default']
     WdText: typeof import('wot-design-uni/components/wd-text/wd-text.vue')['default']
     WdToast: typeof import('wot-design-uni/components/wd-toast/wd-toast.vue')['default']
