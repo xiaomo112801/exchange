@@ -80,7 +80,7 @@ const tabList = [
 
 <template>
   <view class="min-h-screen w-full flex flex-col overflow-hidden bg-white">
-    <wd-navbar right-text="注册" class="w-full" :bordered="false" @click="handleClick">
+    <wd-navbar right-text="注册" class="w-full" :bordered="false" safe-area-inset-top @click="handleClick">
       <template #left>
         <wd-icon name="close" size="0.875rem" @click="handleClose" />
       </template>

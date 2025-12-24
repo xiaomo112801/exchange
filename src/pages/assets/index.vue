@@ -4,6 +4,7 @@ definePage({
   style: {
     navigationBarTitleText: '资产',
   },
+  layout: 'tabbar',
   middlewares: [
     'auth',
   ],

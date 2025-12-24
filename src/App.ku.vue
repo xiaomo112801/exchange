@@ -1,5 +1,6 @@
 <script setup lang="ts">
 const { themeVars, theme } = useManualTheme()
+// uni.hideTabBar()
 </script>
 
 <template>

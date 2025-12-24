@@ -1,13 +1,15 @@
 <script setup lang="ts">
+import CoinList from '@/components/CoinList.vue'
+
 definePage({
   name: 'index',
   style: {
     navigationStyle: 'custom',
   },
+  layout: 'tabbar',
 })
 
 const router = useRouter()
-import CoinList from '@/components/CoinList.vue'
 // const search = ref<string>('')
 const notificationCount = ref<number>(12)
 
@@ -143,6 +145,25 @@ function handleChange(item: any) {
   console.log(item)
 }
 
+// 处理导航项点击
+function handleNavClick(navItem: any) {
+  if (navItem.title === '邀请奖励') {
+    router.push({ name: 'invite' })
+  }
+  else if (navItem.title === '福利中心') {
+    // 可以添加其他导航逻辑
+    console.log('福利中心')
+  }
+  else if (navItem.title === '热币严选') {
+    // 可以添加其他导航逻辑
+    console.log('热币严选')
+  }
+  else if (navItem.title === 'web3钱包') {
+    // 可以添加其他导航逻辑
+    console.log('web3钱包')
+  }
+}
+
 const selectIconItem = ref<number[]>([
   1,
   2,
@@ -213,6 +234,7 @@ const selectIconItem = ref<number[]>([
               <view
                 v-for="navItem in getNavItems(item)" :key="navItem.img"
                 class="flex flex-1 flex-col items-center justify-center px-3"
+                @click="handleNavClick(navItem)"
               >
                 <text :class="navItem.icon" class="text-20px" />
                 <wd-text

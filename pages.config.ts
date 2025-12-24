@@ -20,6 +20,33 @@ export default defineUniPages({
         navigationStyle: 'custom',
       },
     },
+    {
+      path: 'pages/market/index',
+      type: 'page',
+      name: 'market',
+      style: {
+        navigationBarTitleText: '市场',
+        navigationStyle: 'custom',
+      },
+    },
+    {
+      path: 'pages/trade/index',
+      type: 'page',
+      name: 'trade',
+      style: {
+        navigationBarTitleText: '交易',
+        navigationStyle: 'custom',
+      },
+    },
+    {
+      path: 'pages/assets/index',
+      type: 'page',
+      name: 'assets',
+      style: {
+        navigationBarTitleText: '资产',
+        navigationStyle: 'custom',
+      },
+    },
   ],
   globalStyle: {
     // 导航栏配置
@@ -56,7 +83,11 @@ export default defineUniPages({
     list: [{
       pagePath: 'pages/index/index',
     }, {
-      pagePath: 'pages/about/index',
+      pagePath: 'pages/market/index',
+    }, {
+      pagePath: 'pages/trade/index',
+    }, {
+      pagePath: 'pages/assets/index',
     }],
   },
 })

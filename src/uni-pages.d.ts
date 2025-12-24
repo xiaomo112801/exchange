@@ -7,8 +7,6 @@ type _LocationUrl =
   "/pages/index/index" |
   "/pages/assets/index" |
   "/pages/contract/index" |
-  "/pages/index/search" |
-  "/pages/login/index" |
   "/pages/market/index" |
   "/pages/trade/index" |
   "/subPages/feedback/index" |
@@ -17,8 +15,10 @@ type _LocationUrl =
   "/subAsyncEcharts/asyncEcharts/index" |
   "/pagesIndex/HotContractsList" |
   "/pagesIndex/coin/detail" |
+  "/pagesIndex/invite/index" |
   "/pagesIndex/notice/index" |
   "/pagesIndex/recharge/index" |
+  "/pagesIndex/search/search" |
   "/pagesIndex/slider/index";
 
 interface NavigateToOptions {
@@ -27,7 +27,7 @@ interface NavigateToOptions {
 interface RedirectToOptions extends NavigateToOptions {}
 
 interface SwitchTabOptions {
-  url: "/pages/index/index" | "/pages/about/index"
+  url: "/pages/index/index" | "/pages/market/index" | "/pages/trade/index" | "/pages/assets/index"
 }
 
 type ReLaunchOptions = NavigateToOptions | SwitchTabOptions;
