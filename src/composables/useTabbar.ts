@@ -26,7 +26,7 @@ export function useTabbar() {
 
   const getTabbarItemValue = (name: string) => {
     const item = tabbarItems.value.find(item => item.name === name)
-    return item && item.value ? item.value : null
+    return item && item.value !== null ? item.value : undefined
   }
 
   const setTabbarItem = (name: string, value: number) => {

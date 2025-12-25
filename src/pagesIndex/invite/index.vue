@@ -138,14 +138,14 @@ function showQRCode() {
           </view>
 
           <!-- 箭头 -->
-          <wd-icon name="arrow-right" size="1.25rem" color="#00c853" class="mx-2" />
+
           <wd-img src="/static/images/arrow.png" width="1.25rem" height="1.25rem" />
           <!-- 步骤3 -->
           <view class="flex flex-1 flex-col items-center">
             <view class="mb-2 h-12 w-12 flex items-center justify-center">
               <wd-img src="/static/images/invite_step3.png" width="100%" height="100%" />
             </view>
-            <wd-text text="获得相应比例奖励" size="0.75rem" color="#666" class="text-center" />
+            <wd-text text="获得相应奖励" size="0.75rem" color="#666" class="text-center" />
           </view>
         </view>
       </view>

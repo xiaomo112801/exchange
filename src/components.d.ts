@@ -35,7 +35,6 @@ declare module 'vue' {
     WdNotify: typeof import('wot-design-uni/components/wd-notify/wd-notify.vue')['default']
     WdPopup: typeof import('wot-design-uni/components/wd-popup/wd-popup.vue')['default']
     WdSearch: typeof import('wot-design-uni/components/wd-search/wd-search.vue')['default']
-    WdSticky: typeof import('wot-design-uni/components/wd-sticky/wd-sticky.vue')['default']
     WdSwiper: typeof import('wot-design-uni/components/wd-swiper/wd-swiper.vue')['default']
     WdTab: typeof import('wot-design-uni/components/wd-tab/wd-tab.vue')['default']
     WdTabbar: typeof import('wot-design-uni/components/wd-tabbar/wd-tabbar.vue')['default']

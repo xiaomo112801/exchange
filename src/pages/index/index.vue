@@ -169,6 +169,52 @@ const selectIconItem = ref<number[]>([
   2,
   3,
 ])
+
+// 表头固定相关
+const headerHeight = ref(0)
+const scrollTop = ref(0)
+const coinListTop = ref(0)
+const threshold = ref(0)
+const instance = getCurrentInstance()
+
+onMounted(() => {
+  // 计算固定头部高度（只计算 navbar 高度）
+  nextTick(() => {
+    // 计算 navbar 高度
+    setTimeout(() => {
+      uni.createSelectorQuery().in(instance).select('.wd-navbar').boundingClientRect((data: any) => {
+        if (data) {
+          headerHeight.value = data.height
+          updateThreshold()
+        }
+      }).exec()
+
+      // 计算 CoinList 距离顶部的距离
+      uni.createSelectorQuery().in(instance).select('.coin-list-wrapper').boundingClientRect((data: any) => {
+        if (data) {
+          coinListTop.value = data.top
+          updateThreshold()
+        }
+      }).exec()
+    }, 200)
+  })
+})
+
+// 更新 threshold，确保只有在数据准备好后才计算
+function updateThreshold() {
+  if (coinListTop.value > 0 && headerHeight.value > 0) {
+    // threshold 应该是 CoinList 距离视口顶部的距离减去固定头部高度
+    // 只有当滚动超过这个距离时，表头才应该锁定
+    threshold.value = Math.max(0, coinListTop.value - headerHeight.value)
+  }
+}
+
+// 监听页面滚动，传递滚动位置给 CoinList
+onPageScroll(() => {
+  uni.createSelectorQuery().in(instance).selectViewport().scrollOffset((res: any) => {
+    scrollTop.value = res.scrollTop
+  }).exec()
+})
 </script>
 
 <template>
@@ -193,7 +239,7 @@ const selectIconItem = ref<number[]>([
     </wd-navbar>
     <view class="box-border w-full flex flex-col p-3 pt-2">
       <view class="h-full flex items-center justify-start pb-5">
-        <wd-search custom-class="search-input" placeholder-left hide-cancel @focus="focus" />
+        <wd-search custom-class="search-input" placeholder-left hide-cancel placeholder="USDT" @focus="focus" />
         <wd-icon name="scan" size="20" class="search-scan-icon pl-3" />
       </view>
       <view class="relative flex flex-1 items-center justify-start">
@@ -343,10 +389,15 @@ const selectIconItem = ref<number[]>([
             </view>
           </wd-tab>
 
-          <!-- 热门合约：改用通用 CoinList 组件，后续“我的”也可复用 -->
+          <!-- 热门合约：改用通用 CoinList 组件，后续"我的"也可复用 -->
           <wd-tab title="热门合约">
-            <view class="mt-2">
-              <CoinList />
+            <view class="pb-4">
+              <CoinList
+                :header-height="headerHeight"
+                :scroll-top="scrollTop"
+                :threshold="threshold"
+                :enable-sticky="true"
+              />
             </view>
           </wd-tab>
 
@@ -464,9 +515,9 @@ const selectIconItem = ref<number[]>([
 }
 
 ::v-deep .search-input {
-  background-color: #f1f1f1 !important;
+  background-color: #f5f5f5 !important;
   border-radius: 2rem !important;
-  padding: 0 1rem !important;
+  padding: 0 1rem 0 0.5rem !important;
   height: 1.875rem !important;
   line-height: 1.875rem !important;
   display: flex;
@@ -479,6 +530,12 @@ const selectIconItem = ref<number[]>([
   display: flex;
   align-items: center;
   height: 100%;
+  padding-left: 1.5rem !important;
+}
+
+::v-deep  .wd-search__search-left-icon{
+  left:0.2rem !important;
+  font-size:0.88rem !important;
 }
 
 ::v-deep .search-input .wd-search__input-placeholder {
@@ -486,6 +543,7 @@ const selectIconItem = ref<number[]>([
   align-items: center;
   line-height: 1.875rem;
   height: 1.875rem;
+  padding-left: 0 !important;
 }
 
 ::v-deep .recharge-btn {
@@ -657,5 +715,11 @@ const selectIconItem = ref<number[]>([
 ::v-deep .wd-checkbox-group .wd-checkbox {
   margin: 0 !important;
   margin-bottom: 0 !important;
+}
+
+// 确保 coin-list-wrapper 宽度正确
+.coin-list-wrapper {
+  width: 100%;
+  box-sizing: border-box;
 }
 </style>
