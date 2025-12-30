@@ -17,9 +17,24 @@ type _LocationUrl =
   "/pagesIndex/coin/detail" |
   "/pagesIndex/invite/index" |
   "/pagesIndex/notice/index" |
+  "/pagesIndex/recharge/coinSelect" |
   "/pagesIndex/recharge/index" |
+  "/pagesIndex/recharge/record" |
   "/pagesIndex/search/search" |
-  "/pagesIndex/slider/index";
+  "/pagesIndex/slider/index" |
+  "/pagesUser/index" |
+  "/pagesUser/about/index" |
+  "/pagesUser/help/index" |
+  "/pagesUser/security/index" |
+  "/pagesUser/settings/index" |
+  "/pagesUser/verify/index" |
+  "/pagesAsset/mutual/index" |
+  "/pagesAsset/transfer/index" |
+  "/pagesAsset/transfer/record" |
+  "/pagesAsset/withdraw/coinSelect" |
+  "/pagesAsset/withdraw/index" |
+  "/pagesAsset/withdraw/record" |
+  "/pagesTrade/history/index";
 
 interface NavigateToOptions {
   url: _LocationUrl;

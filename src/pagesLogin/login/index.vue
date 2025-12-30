@@ -142,6 +142,10 @@ const tabList = [
   text-align: center;
 }
 
+::v-deep .login-tabs .wd-tabs__line {
+  background-color: #00c853 !important;
+}
+
 .login-tabs {
   margin-left: -0.5rem !important;
 }

@@ -5,6 +5,7 @@ definePage({
   name: 'index',
   style: {
     navigationStyle: 'custom',
+    animationType: 'slide-in-left',
   },
   layout: 'tabbar',
 })
@@ -107,26 +108,17 @@ const mainCoinList = ref<any[]>([
 ])
 const mainCoinListForSwiper = computed(() => mainCoinList.value as unknown as any[])
 
-const tabIndex = ref<number>(1)
+const tabIndex = ref<number>(0)
 
-const tabList = ref<any[]>([
-  {
-
-    title: '我的',
-  },
-  {
-
-    title: '热门合约',
-  },
-  {
-
-    title: '榜单',
-  },
-  {
-
-    title: '新币',
-  },
-])
+// 监听 tab 切换，重新计算 CoinList 位置
+watch(tabIndex, () => {
+  // 延迟一下，确保 tab 内容已经渲染
+  nextTick(() => {
+    setTimeout(() => {
+      updateCoinListPosition()
+    }, 100)
+  })
+})
 
 function focus() {
   router.push({ path: '/pages/index/search' })
@@ -141,8 +133,51 @@ function getNavItems(item: any): any[] {
   return Array.isArray(item) ? item : []
 }
 
-function handleChange(item: any) {
-  console.log(item)
+// 使用自选列表 composable
+const { favoriteCoins, addFavorite } = useFavoriteCoins()
+
+// 初始化 selectIconItem 为所有币对的 id（默认全选）
+// 注意：wd-checkbox-group 可能需要字符串数组
+const selectIconItem = ref<string[]>(mainCoinList.value.map((coin: any) => String(coin.id)))
+
+// 处理 checkbox-group 的 change 事件
+function handleCheckboxChange(value: string[]) {
+  // wd-checkbox-group 的 v-model 会自动更新 selectIconItem
+  // 这里可以添加额外的逻辑，如果需要的话
+  console.log('Checkbox changed:', value)
+}
+
+function handleAddToFavorites() {
+  // 获取选中的币对ID
+  const selectedIds = selectIconItem.value
+
+  if (selectedIds.length === 0) {
+    // 可以添加提示：请至少选择一个币对
+    return
+  }
+
+  // 从 mainCoinList 中找到对应的币对并转换为 CoinListItem 格式
+  // 注意：selectedIds 现在是字符串数组，需要转换为数字进行比较
+  const newFavorites = mainCoinList.value
+    .filter((coin: any) => selectedIds.includes(String(coin.id)))
+    .map((coin: any) => ({
+      id: coin.id,
+      symbol: coin.coinCode,
+      pair: `${coin.coinCode} / USDT`,
+      label: coin.tag2 || '永续',
+      volumeText: '0',
+      lastPrice: String(coin.total),
+      lastPriceCny: `¥ ${coin.total}`,
+      changePercent: `${coin.increase > 0 ? '+' : ''}${coin.increase}%`,
+    }))
+
+  // 添加到自选列表（去重）
+  newFavorites.forEach((coin: any) => {
+    addFavorite(coin)
+  })
+
+  // 清空选中状态
+  selectIconItem.value = []
 }
 
 // 处理导航项点击
@@ -155,8 +190,8 @@ function handleNavClick(navItem: any) {
     console.log('福利中心')
   }
   else if (navItem.title === '热币严选') {
-    // 可以添加其他导航逻辑
-    console.log('热币严选')
+    // 跳转到行情页面的热币严选标签页
+    navigateTo({ name: 'market', query: { tab: '2' } })
   }
   else if (navItem.title === 'web3钱包') {
     // 可以添加其他导航逻辑
@@ -164,18 +199,29 @@ function handleNavClick(navItem: any) {
   }
 }
 
-const selectIconItem = ref<number[]>([
-  1,
-  2,
-  3,
-])
-
 // 表头固定相关
 const headerHeight = ref(0)
 const scrollTop = ref(0)
 const coinListTop = ref(0)
 const threshold = ref(0)
 const instance = getCurrentInstance()
+
+// 计算 CoinList 位置的函数
+function updateCoinListPosition() {
+  // 计算 CoinList 距离顶部的距离
+  uni.createSelectorQuery().in(instance).select('.coin-list-wrapper').boundingClientRect((data: any) => {
+    if (data) {
+      // 获取当前滚动位置
+      uni.createSelectorQuery().in(instance).selectViewport().scrollOffset((scrollData: any) => {
+        const currentScrollTop = scrollData?.scrollTop || 0
+        // coinListTop 应该是相对于页面顶部的距离，而不是相对于视口的距离
+        // 使用 scrollTop + top 来计算相对于页面顶部的距离
+        coinListTop.value = currentScrollTop + data.top
+        updateThreshold()
+      }).exec()
+    }
+  }).exec()
+}
 
 onMounted(() => {
   // 计算固定头部高度（只计算 navbar 高度）
@@ -190,12 +236,7 @@ onMounted(() => {
       }).exec()
 
       // 计算 CoinList 距离顶部的距离
-      uni.createSelectorQuery().in(instance).select('.coin-list-wrapper').boundingClientRect((data: any) => {
-        if (data) {
-          coinListTop.value = data.top
-          updateThreshold()
-        }
-      }).exec()
+      updateCoinListPosition()
     }, 200)
   })
 })
@@ -203,8 +244,9 @@ onMounted(() => {
 // 更新 threshold，确保只有在数据准备好后才计算
 function updateThreshold() {
   if (coinListTop.value > 0 && headerHeight.value > 0) {
-    // threshold 应该是 CoinList 距离视口顶部的距离减去固定头部高度
+    // threshold 应该是 CoinList 距离页面顶部的距离减去固定头部高度
     // 只有当滚动超过这个距离时，表头才应该锁定
+    // 但需要确保 threshold 不会太小，避免表头过早固定
     threshold.value = Math.max(0, coinListTop.value - headerHeight.value)
   }
 }
@@ -222,14 +264,19 @@ onPageScroll(() => {
     <wd-navbar
       safe-area-inset-top
       placeholder
-      title="首页" :bordered="false" fixed
-      custom-style="background-color: white !important; font-weight:normal !important;"
+      :bordered="false" fixed
+      custom-style="background-color: white !important;"
     >
+      <template #title>
+        <wd-text text="首页" size="1.125rem" color="#000" :bold="true" />
+      </template>
       <template #left>
-        <wd-img
-          src="https://s2023.oss-cn-qingdao.aliyuncs.com/resource/svg/light/user.svg?2.0.1764298912568" width="30"
-          height="30"
-        />
+        <view class="flex items-center" @click="navigateTo({ name: 'userCenter' })">
+          <wd-img
+            src="https://s2023.oss-cn-qingdao.aliyuncs.com/resource/svg/light/user.svg?2.0.1764298912568" width="30"
+            height="30"
+          />
+        </view>
       </template>
       <template #right>
         <wd-badge v-model="notificationCount" is-dot :top="10">
@@ -263,9 +310,9 @@ onPageScroll(() => {
           </view>
         </view>
         <view>
-          <wd-button type="success" size="large" custom-class="recharge-btn" @click="navigateTo({ name: 'recharge' })">
-            <wd-text text="充值" size="14px" color="#000" />
-            <wd-icon name="arrow-up1" size="14px" custom-class="arrow-up1-icon" />
+          <wd-button type="success" size="large" custom-class="recharge-btn" @click="navigateTo({ name: 'coinSelect' })">
+            <wd-text text="充值" size="14px" color="#fff" />
+            <wd-icon name="arrow-up1" size="14px" color="#fff" custom-class="arrow-up1-icon" />
           </wd-button>
         </view>
       </view>
@@ -341,52 +388,79 @@ onPageScroll(() => {
       <view class="w-full">
         <wd-tabs v-model="tabIndex" :bordered="false" custom-class="login-tabs" class="w-full">
           <wd-tab title="我的">
-            <view class="tab-content mt-2">
-              <wd-checkbox-group v-model="selectIconItem" class="w-full">
-                <view class="tab-grid grid grid-cols-2 gap-2">
-                  <template v-for="item in mainCoinListForSwiper" :key="item">
-                    <view class="relative">
-                      <view
-                        class="ml-0 flex flex-1 flex-col items-start justify-center gap-1 rounded-lg bg-gray-100 p-3"
-                      >
-                        <view class="mr-1 flex items-center justify-start">
-                          <wd-text
-                            :text="coinItem(item).coinCode" size="0.8rem" :bold="true" color="#000"
-                            line-height="1rem"
-                          />
-                          <wd-text
-                            :text="coinItem(item).tag2" size="0.5rem" color="#000"
-                            class="ml-1 rounded-0.5 bg-gray-200 px-1"
-                          />
-                        </view>
-                        <view class="flex items-center justify-start">
-                          <view>
-                            <wd-text
-                              :text="String(coinItem(item).total)" size="0.7rem" mode="price" color="#000"
-                              line-height="1rem"
-                            />
+            <!-- 如果自选列表不为空，显示 CoinList -->
+            <template v-if="favoriteCoins.length > 0">
+              <view class="w-full pb-4">
+                <CoinList
+                  :header-height="headerHeight"
+                  :scroll-top="scrollTop"
+                  :threshold="threshold"
+                  :enable-sticky="true"
+                  :coins="favoriteCoins"
+                />
+              </view>
+            </template>
+            <!-- 如果自选列表为空，显示选择界面 -->
+            <template v-else>
+              <view class="tab-content mt-2 flex flex-col">
+                <wd-checkbox-group v-model="selectIconItem" class="w-full" @change="handleCheckboxChange">
+                  <view class="tab-grid grid grid-cols-2 gap-2">
+                    <template v-for="(item, index) in mainCoinList" :key="`coin-${item.id}-${index}`">
+                      <view>
+                        <view
+                          class="ml-0 flex flex-1 items-center gap-1 rounded-lg bg-gray-100 p-3 pr-1"
+                        >
+                          <view class="flex flex-1 flex-col items-start justify-center">
+                            <view class="mr-1 flex items-center justify-start">
+                              <wd-text
+                                :text="item.coinCode" size="0.8rem" :bold="true" color="#000"
+                                line-height="1rem"
+                              />
+                              <wd-text
+                                :text="item.tag2" size="0.5rem" color="#000"
+                                class="ml-1 rounded-0.5 bg-gray-200 px-1"
+                              />
+                            </view>
+                            <view class="flex items-center justify-start">
+                              <view>
+                                <wd-text
+                                  :text="String(item.total)" size="0.7rem" mode="price" color="#000"
+                                  line-height="1rem"
+                                />
+                              </view>
+
+                              <view>
+                                <wd-text text="-" size="0.7rem" color="#000" line-height="1rem" />
+                                <wd-text
+                                  :text="`${item.increase}%`" size="0.7rem" color="#000"
+                                  line-height="1rem"
+                                />
+                              </view>
+                            </view>
                           </view>
 
-                          <view>
-                            <wd-text text="-" size="0.7rem" color="#000" line-height="1rem" />
-                            <wd-text
-                              :text="`${coinItem(item).increase}%`" size="0.7rem" color="#000"
-                              line-height="1rem"
-                            />
-                          </view>
+                          <wd-checkbox
+                            :model-value="String(item.id)"
+                            checked-color="#000"
+                          />
                         </view>
                       </view>
-                      <view class="absolute right-0 top-1/2 -translate-y-1/2">
-                        <wd-checkbox
-                          :model-value="coinItem(item).id" checked-color="#000"
-                          @change="handleChange(coinItem(item))"
-                        />
-                      </view>
-                    </view>
-                  </template>
+                    </template>
+                  </view>
+                </wd-checkbox-group>
+                <view class="mt-4 w-full pb-4">
+                  <wd-button
+                    type="primary"
+                    size="large"
+                    block
+                    custom-class="add-to-favorites-btn rounded-full"
+                    @click="handleAddToFavorites"
+                  >
+                    <wd-text text="添加至自选" size="1rem" color="#fff" :bold="true" />
+                  </wd-button>
                 </view>
-              </wd-checkbox-group>
-            </view>
+              </view>
+            </template>
           </wd-tab>
 
           <!-- 热门合约：改用通用 CoinList 组件，后续"我的"也可复用 -->
@@ -403,106 +477,30 @@ onPageScroll(() => {
 
           <!-- 其余标签暂时复用旧内容 -->
           <wd-tab title="榜单">
-            <view class="tab-content mt-2">
-              <wd-checkbox-group v-model="selectIconItem" class="w-full">
-                <view class="tab-grid grid grid-cols-2 gap-2">
-                  <template v-for="item in mainCoinListForSwiper" :key="item">
-                    <view class="relative">
-                      <view
-                        class="ml-0 flex flex-1 flex-col items-start justify-center gap-1 rounded-lg bg-gray-100 p-3"
-                      >
-                        <view class="mr-1 flex items-center justify-start">
-                          <wd-text
-                            :text="coinItem(item).coinCode" size="0.8rem" :bold="true" color="#000"
-                            line-height="1rem"
-                          />
-                          <wd-text
-                            :text="coinItem(item).tag2" size="0.5rem" color="#000"
-                            class="ml-1 rounded-0.5 bg-gray-200 px-1"
-                          />
-                        </view>
-                        <view class="flex items-center justify-start">
-                          <view>
-                            <wd-text
-                              :text="String(coinItem(item).total)" size="0.7rem" mode="price" color="#000"
-                              line-height="1rem"
-                            />
-                          </view>
-
-                          <view>
-                            <wd-text text="-" size="0.7rem" color="#000" line-height="1rem" />
-                            <wd-text
-                              :text="`${coinItem(item).increase}%`" size="0.7rem" color="#000"
-                              line-height="1rem"
-                            />
-                          </view>
-                        </view>
-                      </view>
-                      <view class="absolute right-0 top-1/2 -translate-y-1/2">
-                        <wd-checkbox
-                          :model-value="coinItem(item).id" checked-color="#000"
-                          @change="handleChange(coinItem(item))"
-                        />
-                      </view>
-                    </view>
-                  </template>
-                </view>
-              </wd-checkbox-group>
+            <view class="pb-4">
+              <CoinList
+                :header-height="headerHeight"
+                :scroll-top="scrollTop"
+                :threshold="threshold"
+                :enable-sticky="true"
+              />
             </view>
           </wd-tab>
 
           <wd-tab title="新币">
-            <view class="tab-content mt-2">
-              <wd-checkbox-group v-model="selectIconItem" class="w-full">
-                <view class="tab-grid grid grid-cols-2 gap-2">
-                  <template v-for="item in mainCoinListForSwiper" :key="item">
-                    <view class="relative">
-                      <view
-                        class="ml-0 flex flex-1 flex-col items-start justify-center gap-1 rounded-lg bg-gray-100 p-3"
-                      >
-                        <view class="mr-1 flex items-center justify-start">
-                          <wd-text
-                            :text="coinItem(item).coinCode" size="0.8rem" :bold="true" color="#000"
-                            line-height="1rem"
-                          />
-                          <wd-text
-                            :text="coinItem(item).tag2" size="0.5rem" color="#000"
-                            class="ml-1 rounded-0.5 bg-gray-200 px-1"
-                          />
-                        </view>
-                        <view class="flex items-center justify-start">
-                          <view>
-                            <wd-text
-                              :text="String(coinItem(item).total)" size="0.7rem" mode="price" color="#000"
-                              line-height="1rem"
-                            />
-                          </view>
-
-                          <view>
-                            <wd-text text="-" size="0.7rem" color="#000" line-height="1rem" />
-                            <wd-text
-                              :text="`${coinItem(item).increase}%`" size="0.7rem" color="#000"
-                              line-height="1rem"
-                            />
-                          </view>
-                        </view>
-                      </view>
-                      <view class="absolute right-0 top-1/2 -translate-y-1/2">
-                        <wd-checkbox
-                          :model-value="coinItem(item).id" checked-color="#000"
-                          @change="handleChange(coinItem(item))"
-                        />
-                      </view>
-                    </view>
-                  </template>
-                </view>
-              </wd-checkbox-group>
+            <view class="pb-4">
+              <CoinList
+                :header-height="headerHeight"
+                :scroll-top="scrollTop"
+                :threshold="threshold"
+                :enable-sticky="true"
+              />
             </view>
           </wd-tab>
         </wd-tabs>
       </view>
     </view>
-    <wd-gap bg-color="#fff" :safe-area-inset-bottom="true" height="var(--wot-tabbar-height, 50px)" />
+    <!-- <wd-gap bg-color="#fff" :safe-area-inset-bottom="true" height="var(--wot-tabbar-height, 50px)" /> -->
   </view>
 </template>
 
@@ -548,8 +546,8 @@ onPageScroll(() => {
 
 ::v-deep .recharge-btn {
   border: none !important;
-  background: #97e763 !important;
-  color: #000 !important;
+  background: #00c853 !important;
+  color: #fff !important;
   padding: 0.95rem 1.5rem !important;
   border-radius: 0.9rem 0.5rem 0.9rem 0.5rem !important;
   height: 1.9rem !important;
@@ -636,6 +634,10 @@ onPageScroll(() => {
   color: #000 !important;
 }
 
+::v-deep .login-tabs .wd-tabs__line {
+  background-color: #00c853 !important;
+}
+
 /* Tabs 内容整体居中 */
 .tab-content {
   width: 100%;
@@ -643,6 +645,12 @@ onPageScroll(() => {
   justify-content: center;
   align-items: center;
   padding: 0;
+}
+
+/* 确保"我的"标签下的 CoinList 宽度正常 */
+::v-deep .wd-tab__content .coin-list-wrapper {
+  width: 100% !important;
+  max-width: 100% !important;
 }
 
 .tab-grid {
@@ -697,6 +705,11 @@ onPageScroll(() => {
 .tab-grid .relative ::v-deep .wd-checkbox {
   margin: 0 !important;
   margin-bottom: 0 !important;
+
+}
+
+::v-deep .wd-checkbox {
+  line-height:auto !important;
 }
 
 .tab-grid .relative ::v-deep .wd-checkbox__wrapper {
@@ -717,6 +730,22 @@ onPageScroll(() => {
   margin-bottom: 0 !important;
 }
 
+::v-deep .add-to-favorites-btn {
+  height: 2.75rem !important;
+  border-radius: 0.5rem !important;
+  border: none !important;
+  background-color: #000 !important;
+  color: #fff !important;
+  width: 100% !important;
+  border-radius: 1.375rem !important;
+}
+
+::v-deep .wd-swiper-nav__item--dots, ::v-deep .wd-swiper-nav__item--dots-bar{
+  margin:0 0.1rem !important;
+}
+::v-deep .wd-swiper-nav__item--dots-bar.is-active {
+  width: var(--wot-swiper-nav-dot-size, 0.35rem) !important;
+}
 // 确保 coin-list-wrapper 宽度正确
 .coin-list-wrapper {
   width: 100%;

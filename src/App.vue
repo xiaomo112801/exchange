@@ -29,7 +29,6 @@ view {
   background-color: black;
   font-family: 'Microsoft YaHei', sans-serif;
 }
-
 /* 全局隐藏横向/纵向滚动条，保留滚动功能 */
 ::-webkit-scrollbar {
   width: 0;
@@ -38,7 +37,7 @@ view {
 
 ::-webkit-scrollbar-thumb {
   background: transparent;
-}
+}W
 
 * {
   -ms-overflow-style: none; /* IE 10+ */

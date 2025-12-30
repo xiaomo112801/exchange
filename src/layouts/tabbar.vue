@@ -40,6 +40,8 @@ export default {
     v-if="tabbarList && tabbarList.length > 0 && activeTabbar"
     :model-value="activeTabbar.name" bordered safe-area-inset-bottom fixed
     custom-class="custom-tabbar"
+    inactive-color="#666"
+    active-color="#000"
     @change="handleTabbarChange"
   >
     <wd-tabbar-item
@@ -48,12 +50,16 @@ export default {
       :name="item.name"
       :value="getTabbarItemValue(item.name)"
       :title="item.title"
-      :icon="item.icon"
-    />
+    >
+      <template #icon="{ active }">
+        <wd-icon v-if="item.iconPrefix" :class-prefix="item.iconPrefix" size="1.3rem" :name="active ? item.activeIcon : item.icon" :color="active ? '#000' : '#666'" />
+        <wd-icon v-else :name="item.icon" size="1.3rem" :color="active ? '#000' : '#666'" />
+      </template>
+    </wd-tabbar-item>
   </wd-tabbar>
 </template>
 
-<style scoped lang="scss">
+<style lang="scss">
 ::v-deep .custom-tabbar {
   z-index: 9999 !important;
   position: fixed !important;

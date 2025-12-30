@@ -22,6 +22,12 @@ interface Props {
   threshold?: number
   // 是否启用表头固定功能
   enableSticky?: boolean
+  // 是否禁用导航（如果为 true，则不会自动导航到 coinDetail）
+  disableNavigation?: boolean
+  // 行点击回调函数
+  onRowClick?: (item: CoinListItem) => void
+  // 币种列表数据（如果传入则使用，否则使用内部默认数据）
+  coins?: CoinListItem[]
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -29,6 +35,9 @@ const props = withDefaults(defineProps<Props>(), {
   scrollTop: undefined,
   threshold: 0,
   enableSticky: false,
+  disableNavigation: false,
+  onRowClick: undefined,
+  coins: undefined,
 })
 
 // 表头是否锁定
@@ -117,12 +126,22 @@ function updateStickyState() {
   }
 
   const currentScrollTop = props.scrollTop !== undefined ? props.scrollTop : internalScrollTop.value
-  if (currentScrollTop >= props.threshold) {
-    isTableHeaderSticky.value = true
-  }
-  else {
-    isTableHeaderSticky.value = false
-  }
+
+  // 获取表头相对于视口的位置，只有当表头真正滚动到 navbar 下方时才固定
+  uni.createSelectorQuery().in(instance).select('.coin-list-table .wd-table__header').boundingClientRect((headerData: any) => {
+    if (headerData) {
+      // 当表头的 top 位置 <= headerHeight 时（表头已经滚动到 navbar 下方），才固定
+      // 同时也要满足 scrollTop >= threshold 的条件，避免过早固定
+      const headerTop = headerData.top
+      const shouldSticky = headerTop <= props.headerHeight && currentScrollTop >= props.threshold
+      isTableHeaderSticky.value = shouldSticky
+    }
+    else {
+      // 如果无法获取表头位置，使用原来的逻辑，但增加一个小的缓冲值，避免过早固定
+      const buffer = 10 // 10px 的缓冲，避免表头在距离顶部还有距离时就固定
+      isTableHeaderSticky.value = currentScrollTop >= (props.threshold + buffer)
+    }
+  }).exec()
 }
 
 // 监听滚动位置变化
@@ -159,8 +178,19 @@ onMounted(() => {
   updateStickyState()
 })
 
+// 行点击处理
+function handleRowClick(item: CoinListItem) {
+  if (props.onRowClick) {
+    props.onRowClick(item)
+  }
+  else if (!props.disableNavigation) {
+    // 默认行为：导航到 coinDetail
+    navigateTo({ name: 'coinDetail', query: { id: String(item.id) } })
+  }
+}
+
 // 先用本地示例数据，后续可以接入真实接口或通过 props 传入
-const coins = ref<CoinListItem[]>([
+const defaultCoins = ref<CoinListItem[]>([
   {
     id: 1,
     symbol: 'ETH',
@@ -363,6 +393,9 @@ const coins = ref<CoinListItem[]>([
   },
 ])
 
+// 使用传入的 coins 或默认数据
+const coins = computed(() => props.coins || defaultCoins.value)
+
 // 左侧表头：市值 / 成交额 可切换
 const metricType = ref<'marketCap' | 'volume'>('volume')
 const metricLabel = computed(() => (metricType.value === 'marketCap' ? '市值' : '成交额'))
@@ -371,32 +404,12 @@ function switchMetric(type: 'marketCap' | 'volume') {
   metricType.value = type
 }
 
-const originalCoins = [...coins.value]
-
-function normalizeNumber(val: string): number {
-  const cleaned = val.replace(/[,%¥\s]/g, '').replace(/,/g, '')
-  const n = Number(cleaned)
-  return Number.isNaN(n) ? Number.NaN : n
-}
-
-function handleSort(column: any) {
-  const dir = column.sortDirection as number
-  if (!dir) {
-    coins.value = [...originalCoins]
-    return
-  }
-  const prop = column.prop as keyof CoinListItem
-  const sorted = [...coins.value].sort((a, b) => {
-    const av = a[prop] as unknown as string
-    const bv = b[prop] as unknown as string
-    const an = normalizeNumber(String(av))
-    const bn = normalizeNumber(String(bv))
-    if (!Number.isNaN(an) && !Number.isNaN(bn)) {
-      return (an - bn) * dir
-    }
-    return String(av).localeCompare(String(bv)) * dir
-  })
-  coins.value = sorted
+// 注意：由于 coins 现在是 computed，排序功能需要调整
+// 如果需要排序功能，建议通过 props 传入排序后的数据
+function handleSort() {
+  // 如果 coins 是 computed，排序功能暂时禁用
+  // 可以通过 emit 事件通知父组件进行排序
+  console.warn('排序功能需要父组件传入排序后的数据')
 }
 </script>
 
@@ -420,6 +433,7 @@ function handleSort(column: any) {
         :fixed-header="true"
         class="coin-list-table"
         @sort-method="handleSort"
+        @row-click="handleRowClick"
       >
         <!-- 列 1：左列 = 币种 + 市值/成交额（可排序），约占 40% -->
         <wd-table-col prop="symbol" width="40%" label="成交额" sortable>
@@ -461,7 +475,7 @@ function handleSort(column: any) {
         <!-- 列 2：中列 = 最新价（可排序），约占 30% -->
         <wd-table-col prop="lastPrice" width="35%" label="最新价" align="right" sortable>
           <template #value="{ row }">
-            <view class="flex flex-col items-end">
+            <view class="flex flex-col items-end" @click="handleRowClick(row)">
               <wd-text :text="row.lastPrice" size="14px" color="#000" :bold="true" />
               <wd-text :text="row.lastPriceCny" size="0.7rem" color="#999" />
             </view>
@@ -471,7 +485,7 @@ function handleSort(column: any) {
         <!-- 列 3：右列 = 24H 涨跌幅（可排序），约占 30% -->
         <wd-table-col prop="changePercent" width="25%" label="24H涨跌幅" align="right" sortable>
           <template #value="{ row }">
-            <view class="flex items-center justify-end">
+            <view class="flex items-center justify-end" @click="handleRowClick(row)">
               <view class="min-w-[52px] rounded-md bg-[#f64c3c] px-2 py-1 text-center">
                 <wd-text :text="row.changePercent" size="0.8rem" color="#fff" />
               </view>

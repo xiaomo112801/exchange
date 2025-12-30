@@ -1,0 +1,70 @@
+@font-face {
+  font-family: "custom"; /* Project id 5098791 */
+  src: url('./iconfont.woff2?t=1766768724138') format('woff2'),
+       url('./iconfont.woff?t=1766768724138') format('woff'),
+       url('./iconfont.ttf?t=1766768724138') format('truetype');
+}
+
+.custom {
+  font-family: "custom" !important;
+  font-size: 16px;
+  font-style: normal;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.custom-home:before {
+  content: "\e609";
+}
+
+.custom-home-1:before {
+  content: "\e60d";
+}
+
+.custom-chart-bubble:before {
+  content: "\e640";
+}
+
+.custom-chart-bubble1:before {
+  content: "\e6b0";
+}
+
+
+
+.custom-money-wallet-fill:before {
+  content: "\e831";
+}
+
+.custom-money-wallet:before {
+  content: "\e833";
+}
+
+.custom-hangqing_huaban1:before {
+  content: "\e602";
+}
+
+.custom-zijinhuazhuan:before {
+  content: "\e643";
+}
+
+.custom--hangqing:before {
+  content: "\e601";
+}
+
+
+.custom-recharge:before {
+  content: "\e604";
+}
+
+.custom-lishijilu:before {
+  content: "\e642";
+}
+
+.custom-kxiantu:before {
+  content: "\e62d";
+}
+
+.custom-hangqing:before {
+  content: "\e601";
+}
+

@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import PairSelector from '@/components/PairSelector.vue'
+import { useFavoriteCoins } from '@/composables/useFavoriteCoins'
+import { useGlobalToast } from '@/composables/useGlobalToast'
 // 导入标签页组件
 import MarketTab from './components/MarketTab.vue'
 import OverviewTab from './components/OverviewTab.vue'
@@ -15,6 +17,12 @@ definePage({
 const router = useRouter()
 const route = useRoute()
 const coinId = computed(() => (route.query?.id as string) || '1')
+
+// 使用自选列表 composable
+const { isFavorite, toggleFavorite: toggleFavoriteCoin } = useFavoriteCoins()
+
+// 使用全局 Toast
+const toast = useGlobalToast()
 
 const coinDataMap: Record<string, {
   name: string
@@ -82,8 +90,8 @@ const tradingSymbol = computed(() => {
 // 标签页
 const tabIndex = ref(0)
 
-// 收藏状态
-const isFavorited = ref(false)
+// 检查当前币对是否在自选列表中
+const isFavorited = computed(() => isFavorite(coinId.value))
 
 // 交易对弹窗
 const showPairPopup = ref(false)
@@ -106,7 +114,18 @@ function handlePairSelect(_item: any) {
 }
 
 function toggleFavorite() {
-  isFavorited.value = !isFavorited.value
+  // 将当前币对数据转换为 CoinListItem 格式
+  const coinItem = {
+    id: Number.parseInt(coinId.value),
+    symbol: coinData.value.code,
+    pair: `${coinData.value.code} / USDT`,
+    label: '永续',
+    volumeText: coinData.value.volume24h || '0',
+    lastPrice: String(coinData.value.price),
+    lastPriceCny: `¥ ${coinData.value.price}`,
+    changePercent: `${coinData.value.changePercent > 0 ? '+' : ''}${coinData.value.changePercent}%`,
+  }
+  toggleFavoriteCoin(coinItem)
 }
 
 function handleOpenPosition() {
@@ -117,6 +136,214 @@ function handleOpenPosition() {
 function handleClosePosition() {
   // 平仓逻辑
   console.log('平仓')
+}
+
+// 分享相关
+const showSharePopup = ref(false)
+const shareCanvasId = 'share-canvas'
+const instance = getCurrentInstance()
+
+// 生成页面图片并分享
+async function handleShare() {
+  try {
+    // 显示分享弹窗
+    showSharePopup.value = true
+  }
+  catch (error) {
+    console.error('分享失败:', error)
+    uni.showToast({
+      title: '分享失败',
+      icon: 'none',
+    })
+  }
+}
+
+// 生成页面截图
+async function capturePageImage(): Promise<string> {
+  return new Promise((resolve, reject) => {
+    // 获取系统信息
+    const systemInfo = uni.getSystemInfoSync()
+    const width = systemInfo.windowWidth
+    const height = systemInfo.windowHeight
+
+    // 创建 canvas 上下文
+    const ctx = uni.createCanvasContext(shareCanvasId, instance)
+
+    // 设置 canvas 尺寸
+    const canvasWidth = width
+    const canvasHeight = height * 2 // 增加高度以包含滚动内容
+
+    // 绘制背景
+    ctx.setFillStyle('#ffffff')
+    ctx.fillRect(0, 0, canvasWidth, canvasHeight)
+
+    // 绘制导航栏
+    ctx.setFillStyle('#ffffff')
+    ctx.fillRect(0, 0, canvasWidth, 44)
+
+    // 绘制币对信息
+    ctx.setFillStyle('#000000')
+    ctx.setFontSize(16)
+    ctx.fillText(`${coinData.value.code}/USDT`, 50, 30)
+
+    // 绘制价格信息
+    ctx.setFontSize(28)
+    ctx.fillText(String(coinData.value.price), 20, 100)
+
+    ctx.setFontSize(14)
+    ctx.setFillStyle('#666666')
+    ctx.fillText(`≈¥${(coinData.value.price * 7.08).toFixed(2)}`, 20, 130)
+
+    const changeColor = coinData.value.changePercent > 0 ? '#00c853' : '#f44336'
+    ctx.setFillStyle(changeColor)
+    ctx.fillText(
+      `${coinData.value.changePercent > 0 ? '+' : ''}${coinData.value.changePercent}%`,
+      20,
+      150,
+    )
+
+    // 绘制 24H 数据
+    ctx.setFontSize(12)
+    ctx.setFillStyle('#999999')
+    ctx.fillText('24H最高', canvasWidth - 120, 100)
+    ctx.setFillStyle('#000000')
+    ctx.fillText(String(coinData.value.high24h), canvasWidth - 120, 120)
+
+    ctx.setFillStyle('#999999')
+    ctx.fillText('24H最低', canvasWidth - 120, 150)
+    ctx.setFillStyle('#000000')
+    ctx.fillText(String(coinData.value.low24h), canvasWidth - 120, 170)
+
+    // 绘制提示文字
+    ctx.setFontSize(12)
+    ctx.setFillStyle('#999999')
+    ctx.fillText('（图表区域）', canvasWidth / 2 - 40, 300)
+
+    // 执行绘制
+    ctx.draw(false, () => {
+      // 将 canvas 转换为临时文件
+      uni.canvasToTempFilePath({
+        canvasId: shareCanvasId,
+        success: (res) => {
+          resolve(res.tempFilePath)
+        },
+        fail: (err) => {
+          reject(err)
+        },
+      }, instance)
+    })
+  })
+}
+
+// 下载图片
+async function handleDownloadImage() {
+  try {
+    toast.show({
+      msg: '正在生成图片...',
+      iconName: 'loading',
+      duration: 2000,
+    })
+
+    // 关闭分享弹窗
+    showSharePopup.value = false
+
+    // 等待一下确保页面渲染完成
+    await new Promise(resolve => setTimeout(resolve, 500))
+
+    // 生成截图
+    const imagePath = await capturePageImage()
+
+    // 保存到相册
+    uni.saveImageToPhotosAlbum({
+      filePath: imagePath,
+      success: () => {
+        toast.success('保存成功')
+      },
+      fail: (err: any) => {
+        console.error('保存失败:', err)
+        toast.error('保存失败')
+      },
+    })
+  }
+  catch (error) {
+    console.error('下载图片失败:', error)
+    toast.error('操作失败')
+  }
+}
+
+// 分享图片
+async function handleShareImage() {
+  try {
+    toast.show({
+      msg: '正在生成图片...',
+      iconName: 'loading',
+      duration: 2000,
+    })
+
+    // 关闭分享弹窗
+    showSharePopup.value = false
+
+    // 等待一下确保页面渲染完成
+    await new Promise(resolve => setTimeout(resolve, 500))
+
+    // 生成截图
+    const imagePath = await capturePageImage()
+
+    // 使用 uni.share 分享
+    // #ifdef APP-PLUS
+    uni.share({
+      provider: 'weixin',
+      scene: 'WXSceneSession',
+      type: 2, // 分享图片
+      imagePath,
+      success: () => {
+        toast.success('分享成功')
+      },
+      fail: (err: any) => {
+        console.error('分享失败:', err)
+        toast.error('分享失败')
+      },
+    })
+    // #endif
+
+    // #ifdef H5
+    // H5 环境使用 Web Share API
+    if (navigator.share) {
+      try {
+        // 将图片转换为 Blob
+        const response = await fetch(imagePath)
+        const blob = await response.blob()
+        const file = new File([blob], 'share.png', { type: 'image/png' })
+
+        await navigator.share({
+          title: `${coinData.value.code}/USDT 行情`,
+          text: `当前价格: ${coinData.value.price}，涨跌幅: ${coinData.value.changePercent}%`,
+          files: [file],
+        })
+        toast.success('分享成功')
+      }
+      catch (err: any) {
+        console.error('分享失败:', err)
+        toast.error('分享失败')
+      }
+    }
+    else {
+      toast.error('当前环境不支持分享')
+    }
+    // #endif
+
+    // #ifdef MP-WEIXIN
+    // 微信小程序使用分享功能
+    uni.showShareMenu({
+      withShareTicket: true,
+      menus: ['shareAppMessage', 'shareTimeline'],
+    })
+    // #endif
+  }
+  catch (error) {
+    console.error('分享图片失败:', error)
+    toast.error('分享失败')
+  }
 }
 </script>
 
@@ -146,10 +373,12 @@ function handleClosePosition() {
       <template #right>
         <view class="relative z-2 min-w-[88px] flex items-center justify-end gap-3">
           <wd-icon
-            :name="isFavorited ? 'star-fill' : 'star'" size="18px" :color="isFavorited ? '#ffd700' : '#666'"
+            :name="isFavorited ? 'star-filled' : 'star'"
+            size="18px"
+            :color="isFavorited ? '#ffd700' : '#666'"
             @click="toggleFavorite"
           />
-          <wd-icon name="refresh1" size="18px" color="#666" />
+          <wd-icon name="share" size="18px" color="#666" @click="handleShare" />
         </view>
       </template>
     </wd-navbar>
@@ -182,7 +411,7 @@ function handleClosePosition() {
 
     <!-- 底部操作栏（弹窗显示时隐藏） -->
     <view
-      v-if="!showPairPopup"
+      v-if="!showPairPopup && !showSharePopup"
       class="fixed bottom-0 left-0 right-0 z-100 h-[60px] flex items-center justify-between border-t border-gray-200 bg-white px-3 py-2"
     >
       <view class="flex flex-nowrap items-center gap-3 px-1">
@@ -219,6 +448,42 @@ function handleClosePosition() {
         @select="handlePairSelect"
       />
     </wd-popup>
+
+    <!-- 分享弹窗 -->
+    <wd-popup
+      v-model="showSharePopup"
+      position="bottom"
+      round
+      radius="12px 12px 0 0"
+      custom-class="share-popup"
+      custom-style="z-index: 1000 !important;"
+    >
+      <view class="flex flex-col p-4 pb-6">
+        <view class="mb-4 text-center">
+          <wd-text text="分享图片" size="1rem" color="#000" :bold="true" />
+        </view>
+        <view class="flex items-center justify-around gap-4">
+          <view class="flex flex-col items-center gap-2" @click="handleDownloadImage">
+            <view class="h-12 w-12 flex items-center justify-center rounded-full bg-gray-100">
+              <wd-icon name="download" size="24px" color="#666" />
+            </view>
+            <wd-text text="下载图片" size="0.875rem" color="#666" />
+          </view>
+          <view class="flex flex-col items-center gap-2" @click="handleShareImage">
+            <view class="h-12 w-12 flex items-center justify-center rounded-full bg-gray-100">
+              <wd-icon name="share" size="24px" color="#666" />
+            </view>
+            <wd-text text="分享图片" size="0.875rem" color="#666" />
+          </view>
+        </view>
+      </view>
+    </wd-popup>
+
+    <!-- 隐藏的 canvas 用于生成图片 -->
+    <canvas
+      :canvas-id="shareCanvasId"
+      :style="{ position: 'fixed', top: '-9999px', width: '100%', height: '100%' }"
+    />
   </view>
 </template>
 
@@ -338,5 +603,14 @@ function handleClosePosition() {
 
 ::v-deep .action-btn.wd-button--error {
   background-color: #f44336 !important;
+}
+
+/* 分享弹窗样式 */
+::v-deep .share-popup {
+  z-index: 1000 !important;
+}
+
+::v-deep .share-popup .wd-popup {
+  z-index: 1000 !important;
 }
 </style>

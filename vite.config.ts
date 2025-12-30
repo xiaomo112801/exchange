@@ -28,6 +28,9 @@ export default defineConfig({
         'src/subEcharts',
         'src/subAsyncEcharts',
         'src/pagesIndex',
+        'src/pagesUser',
+        'src/pagesAsset',
+        'src/pagesTrade',
       ],
       /**
        * 排除的页面，相对于 dir 和 subPackages

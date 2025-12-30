@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import CoinList from '@/components/CoinList.vue'
+
 interface PairItem {
   name: string
   pair: string
@@ -7,6 +9,17 @@ interface PairItem {
   change: string
   badge?: string
   type?: string
+}
+
+interface CoinListItem {
+  id: number
+  symbol: string
+  pair: string
+  label: string
+  volumeText: string
+  lastPrice: string
+  lastPriceCny: string
+  changePercent: string
 }
 
 const props = withDefaults(defineProps<{
@@ -53,12 +66,27 @@ function handleSubTabChange(i: number) {
   emit('update:activeSubTab', i)
 }
 
-function handleSelect(item: PairItem) {
-  emit('select', item)
-}
+// 将 PairItem 转换为 CoinListItem
+const coinList = computed<CoinListItem[]>(() => {
+  return props.pairs.map((item, index) => ({
+    id: index + 1,
+    symbol: item.name,
+    pair: item.pair,
+    label: props.tagLabel || '永续',
+    volumeText: item.badge || '0',
+    lastPrice: item.price,
+    lastPriceCny: item.cny,
+    changePercent: item.change,
+  }))
+})
 
-function isActive(item: PairItem) {
-  return props.selectedCode && item.name === props.selectedCode
+// 处理 CoinList 的行点击，转换为 PairItem 并触发 select 事件
+function handleCoinListRowClick(coinItem: CoinListItem) {
+  // 找到对应的 PairItem
+  const pairItem = props.pairs.find(p => p.name === coinItem.symbol)
+  if (pairItem) {
+    emit('select', pairItem)
+  }
 }
 </script>
 
@@ -99,54 +127,28 @@ function isActive(item: PairItem) {
       </view>
     </view>
 
-    <view class="flex flex-1 flex-col gap-2 overflow-y-auto py-2.5">
-      <view
-        v-for="(item, idx) in pairs"
-        :key="item.pair"
-        class="flex items-center justify-between rounded-lg px-3 py-2.5"
-        :class="isActive(item) ? 'active-pair' : ''"
-      >
-        <view class="flex flex-col gap-1">
-          <view class="flex items-center gap-1">
-            <wd-text :text="item.name" size="15px" color="#000" :bold="true" />
-            <wd-text text="/USDT" size="12px" color="#999" />
-          </view>
-          <view class="flex items-center gap-2">
-            <wd-text :text="tagLabel" size="12px" color="#999" />
-            <wd-text v-if="item.badge" :text="item.badge" size="12px" color="#58c12f" />
-          </view>
-        </view>
-        <view class="flex items-center gap-3">
-          <view class="flex flex-col items-end gap-0.5">
-            <wd-text :text="item.price" size="17px" color="#000" :bold="true" />
-            <wd-text :text="item.cny" size="13px" color="#999" />
-          </view>
-          <wd-button
-            size="small"
-            type="success"
-            custom-class="pair-change-btn"
-            @click.stop="handleSelect(item)"
-          >
-            <wd-text :text="item.change" size="13px" color="#fff" />
-          </wd-button>
-        </view>
-      </view>
+    <view class="flex flex-1 flex-col overflow-y-auto">
+      <CoinList
+        :coins="coinList"
+        :disable-navigation="true"
+        :on-row-click="handleCoinListRowClick"
+      />
     </view>
   </view>
 </template>
 
-<style scoped lang="scss">
-.active-pair {
-  background-color: #e6f6ec;
-  border: 1px solid #b5e3c5;
-}
+  <style scoped lang="scss">
+  .active-pair {
+    background-color: #e6f6ec;
+    border: 1px solid #b5e3c5;
+  }
 
-.pair-change-btn {
-  background-color: #3bb149 !important;
-  border: none !important;
-  height: 32px !important;
-  min-width: 80px !important;
-  padding: 0 12px !important;
-  border-radius: 6px !important;
-}
-</style>
+  .pair-change-btn {
+    background-color: #3bb149 !important;
+    border: none !important;
+    height: 32px !important;
+    min-width: 80px !important;
+    padding: 0 12px !important;
+    border-radius: 6px !important;
+  }
+  </style>

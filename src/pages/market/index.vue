@@ -11,6 +11,9 @@ definePage({
   layout: 'tabbar',
 })
 
+// 获取路由参数
+const route = useRoute()
+
 // 主导航标签
 const mainTab = ref(1) // 合约被选中
 const mainTabs = ['自选', '合约', '热币严选']
@@ -29,6 +32,14 @@ const newCoinCardHeight = ref(0)
 const scrollTop = ref(0)
 
 onMounted(() => {
+  // 根据路由参数设置初始标签页
+  if (route.query?.tab) {
+    const tabIndex = Number(route.query.tab)
+    if (tabIndex >= 0 && tabIndex < mainTabs.length) {
+      mainTab.value = tabIndex
+    }
+  }
+
   // 计算头部高度
   nextTick(() => {
     uni.createSelectorQuery().in(instance).select('.fixed-header').boundingClientRect((data: any) => {
